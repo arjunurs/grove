@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 from googlemaps.exceptions import HTTPError, TransportError
 from os.path import dirname, abspath, join
@@ -18,6 +19,19 @@ def findstore():
 @pytest.fixture()
 def no_requests(monkeypatch):
     monkeypatch.delattr("requests.sessions.Session.request")
+
+
+@pytest.fixture()
+def df():
+    labels = ['Store Name', 'Store Location', 'Address', 'City',
+              'State', 'Zip Code', 'Latitude', 'Longitude', 'County']
+    stores = [['store1', 'store1 location',
+              'store1 address', 'city', 'CA', '94118',
+               37.7820964, -122.4464697, 'county'],
+              ['store2', 'store2 location',
+              'store2 address', 'city', 'CA', '94118',
+               37.7820964, -122.4464697, 'county']]
+    return pd.DataFrame.from_records(stores, columns=labels)
 
 
 def test_no_api_key():
@@ -102,3 +116,46 @@ def test_connection_error(findstore, no_requests):
     with pytest.raises(TransportError):
         findstore.find_nearest_store("94086", miles=True, text_output=False)
 
+
+def test_multiple_nearest_stores(monkeypatch, df):
+    def mockloadfile(data_file):
+        return
+    fs = find_store.FindStore(settings.GOOGLE_API_KEY)
+    monkeypatch.setattr(fs, 'load_data_file', mockloadfile)
+    fs.load_data_file("test.csv")
+    monkeypatch.setattr(fs, '_df', df)
+    actual_output = fs.find_nearest_store("94086", miles=True, text_output=False)
+    expected_output = """[
+  {
+    "Address": "store1 address",
+    "City": "city",
+    "County": "county",
+    "Distance": 36.68501517148529,
+    "Latitude": 37.7820964,
+    "Longitude": -122.4464697,
+    "State": "CA",
+    "Store Location": "store1 location",
+    "Store Name": "store1",
+    "Zip Code": "94118"
+  },
+  {
+    "Address": "store2 address",
+    "City": "city",
+    "County": "county",
+    "Distance": 36.68501517148529,
+    "Latitude": 37.7820964,
+    "Longitude": -122.4464697,
+    "State": "CA",
+    "Store Location": "store2 location",
+    "Store Name": "store2",
+    "Zip Code": "94118"
+  }
+]"""
+    assert actual_output == expected_output
+
+
+def test_csv_no_exist():
+    fs = find_store.FindStore(settings.GOOGLE_API_KEY)
+    with pytest.raises(FileNotFoundError):
+        fs.load_data_file("non_existent_file.csv")
+        fs.find_nearest_store("94086", miles=True, text_output=False)
