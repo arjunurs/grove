@@ -35,14 +35,14 @@ import settings
 
 class FindStore:
     def __init__(self, api_key=None):
-        self.gmaps = self._create_gmaps_client(api_key)
-        self.df = None
+        self._gmaps = self._create_gmaps_client(api_key)
+        self._df = None
 
     def _create_gmaps_client(self, api_key):
         return googlemaps.Client(api_key)
 
     def load_data_file(self, data_file):
-        self.df = pd.read_csv(data_file, encoding='cp1252')
+        self._df = pd.read_csv(data_file, encoding='cp1252')
         return
 
     # https://github.com/mapado/haversine/blob/master/haversine/__init__.py
@@ -62,44 +62,50 @@ class FindStore:
         return mi
 
     def find_nearest_store(self, location, miles=True, text_output=True):
-        geocode_result = self.gmaps.geocode(location)
+        if not (isinstance(miles, bool) and isinstance(text_output, bool)):
+            raise ValueError("miles and text_output are boolean parameters")
 
-        origin_lat = geocode_result[0]["geometry"]["location"]["lat"]
-        origin_lng = geocode_result[0]["geometry"]["location"]["lng"]
+        geocode_result = self._gmaps.geocode(location)
 
-        if self.df is not None:
+        if geocode_result:
+            origin_lat = geocode_result[0]["geometry"]["location"]["lat"]
+            origin_lng = geocode_result[0]["geometry"]["location"]["lng"]
+        else:
+            raise ValueError("Invalid location")
+
+        if self._df is not None:
             self._update_distance(origin_lat, origin_lng,
-                                  self.df['Latitude'].values, self.df['Longitude'].values,
+                                  self._df['Latitude'].values, self._df['Longitude'].values,
                                   miles)
         else:
             raise ValueError("Store locations not loaded")
 
-        nearest_stores = self.df[self.df["Distance"] == self.df["Distance"].min()].dropna()
+        nearest_stores = self._df[self._df["Distance"] == self._df["Distance"].min()].dropna()
 
         nearest_stores_lst = []
         for _, row in nearest_stores.iterrows():
             nearest_stores_lst.append(row.to_dict())
 
         if text_output:
-            self._output_text(nearest_stores_lst)
+            return self._output_text(nearest_stores_lst)
         else:
-            self._output_json(nearest_stores_lst)
-        return
+            return self._output_json(nearest_stores_lst)
 
     def _update_distance(self, lat1, lon1, lat2, lon2, miles):
-        self.df["Distance"] = self._haversine(lat1, lon1, lat2, lon2, miles)
+        self._df["Distance"] = self._haversine(lat1, lon1, lat2, lon2, miles)
         return
 
     def _output_json(self, nearest_stores_lst):
-        print(json.dumps(nearest_stores_lst, sort_keys=True, indent=2))
-        return
+        t = json.dumps(nearest_stores_lst, sort_keys=True, indent=2)
+        return t
 
     def _output_text(self, nearest_stores_lst):
+        output = []
         for store in nearest_stores_lst:
             for key, value in store.items():
-                print(f"{key:<30} {value:>40}")
-            print()
-        return
+                output.append(f"{key:<30} {value:>40}")
+            output.append("\n")
+        return "\n".join(output)
 
 
 def main():
@@ -131,8 +137,11 @@ def main():
     data_file = os.path.join(os.path.dirname(__file__), 'store-locations.csv')
     fs.load_data_file(data_file)
 
-    fs.find_nearest_store(location, miles, text_output)
+    print(fs.find_nearest_store(location, miles, text_output))
+
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    status = main()
+    sys.exit(status)
