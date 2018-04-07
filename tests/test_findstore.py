@@ -1,8 +1,6 @@
+import pytest
 from googlemaps.exceptions import HTTPError, TransportError
 from os.path import dirname, abspath, join
-from pytest_mock
-
-import pytest
 
 import find_store
 import settings
