@@ -8,20 +8,51 @@ import pandas as pd
 
 
 class FindStore:
+    """Main interface to store locator
+    
+    CLI interacts with store locator by creating an instance of FindStore.
+    The object instantiates a google maps client to geocode the location provided,
+    finds the haversine distance to each store and returns the nearest store.
+
+    :param api_key: google maps api_key
+
+    """
     def __init__(self, api_key=None):
         self._gmaps = self._create_gmaps_client(api_key)
         self._df = None
 
     def _create_gmaps_client(self, api_key):
+        """Create google maps client
+
+        :param api_key: google maps api_key
+        :returns: google maps client
+        :raises ValueError: raises ValueError if api_key is not provided or is invalid
+
+        """
         return googlemaps.Client(api_key)
 
     def load_data_file(self, data_file):
+        """Load stores dataset
+
+        :param data_file: store data file
+        :raises FileNotFoundError: raises FileNotFoundError if data_file cannot be found
+
+        """
         self._df = pd.read_csv(data_file, encoding='cp1252')
         return
 
-    # https://github.com/mapado/haversine/blob/master/haversine/__init__.py
     @staticmethod
     def _haversine(lat1, lon1, lat2, lon2, miles=True):
+        """Find haversine distance to each store in the specified unit
+
+        :param lat1: latittude of location1
+        :param lon1: longitude of location1
+        :param lat2: latittude of location2
+        :param lon2: longitude of location2
+        :param miles: find distance in miles or kilometer (Default value = True)
+
+        """
+        # Code based on https://github.com/mapado/haversine/blob/master/haversine/__init__.py
         miles_constant = 3959
         lat1, lon1, lat2, lon2 = map(np.deg2rad, [lat1, lon1, lat2, lon2])
         dlat = lat2 - lat1
@@ -36,6 +67,15 @@ class FindStore:
         return mi
 
     def find_nearest_store(self, location, miles=True, text_output=True):
+        """Finds the distance of each store from the given location and adds it
+        to the dataframe. Finally querying the dataframe to find the nearest store.
+
+        :param location: origin location
+        :param miles: find distance in miles or kilometer (Default value = True)
+        :param text_output: output in text or json (Default value = True)
+        :raises ValueError: if any of the parameters are incorrect
+
+        """
         if not (isinstance(miles, bool) and isinstance(text_output, bool)):
             raise ValueError("miles and text_output are boolean parameters")
 
@@ -66,14 +106,33 @@ class FindStore:
             return self._output_json(nearest_stores_lst)
 
     def _update_distance(self, lat1, lon1, lat2, lon2, miles):
+        """Update distance of each store from the given location.
+
+        :param lat1: latitude of location1
+        :param lon1: longitude of location1
+        :param lat2: latitude of location1
+        :param lon2: longitude of location1
+        :param miles: distance in miles or kilometers
+
+        """
         self._df["Distance"] = self._haversine(lat1, lon1, lat2, lon2, miles)
         return
 
     def _output_json(self, nearest_stores_lst):
+        """Return json string of the nearest stores
+
+        :param nearest_stores_lst: 
+
+        """
         t = json.dumps(nearest_stores_lst, sort_keys=True, indent=2)
         return t
 
     def _output_text(self, nearest_stores_lst):
+        """Return formatted string of the nearest stores
+
+        :param nearest_stores_lst: 
+
+        """
         output = []
         for store in nearest_stores_lst:
             for key, value in store.items():
