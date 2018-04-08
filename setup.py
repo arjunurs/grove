@@ -14,14 +14,14 @@ setup(
 
     description='Locate the nearest store and print the matching store address and distance',  
 
-    packages=find_packages(),
+    packages=find_packages(where='src'),
     package_dir={'': 'src'},
 
     install_requires=['docopt', 'googlemaps', 'pandas', 'numpy'],  
 
     entry_points={  
         'console_scripts': [
-            'find_store=find_store:main',
+            'find_store=find_store.main:main',
         ],
     },
 

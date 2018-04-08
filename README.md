@@ -1,14 +1,11 @@
-# Coding challenge
+# Store Locator
 
-In this repo there is store-locations.csv
+This is a command-line application that uses a tabular dataset for a national retail chain to find the nearest  store to a specified address or zip. The dataset is included in the repo (store-locations.csv).
 
-This is a tabular dataset of the locations of every store of a major national retail chain.
 
-# Deliverables
+# Command-line
 
-Please download the file (rather than forking this repo), do the exercise, and then upload to your own repo.
-
-Write a command-line application that uses the data to conform to the following specification (note that this specification conforms to http://docopt.org/)
+CLI options supported. (Specification conforms to http://docopt.org/)
 
 ```
 Find Store
@@ -33,20 +30,7 @@ Example
   find_store --zip=94115 --units=km
 ```
 
-Additionally:
+# Approach
 
-- Please write up a paragraph or two about how your solution works, any assumptions or caveats, and put it in a readme file.
-- Your solution should be well-tested in the testing framework of your choice. Commit the test suite to your repo.
-- The output format is not rigidly specified. Use your judgement for both the text and json formats.
+The application loads the dataset for the stores into a pandas dataframe and calculates the [haversine distance](https://en.wikipedia.org/wiki/Haversine_formula) to the address or zip specified in the commandline. The dataframe is then queried based on distance to find the nearest store. The distance can be in miles or kilometer based on the option. The output format can also be specified in the CLI option. 
 
-Send me a github link to the final project.
-
-# Notes
-
-Feel free to do this in whatever language you would like, and focus on the problem itself (rather than framework/scaffolding). Please make sure it's reasonably easy to run your code and there are clear instructions for doing so.
-
-You will need to use an external geocoding service. However please implement the distance calculation in your own code. To the extent you need any algorithms, I'm not expecting you to invent anything from scratch, so use Google & external libraries judiciously, and cite/document appropriately.
-
-You can add polish or an extra features if you'd like, but remember that software is about tradeoffs and *by far the most important thing is delivering working, practical software that solves the problem of finding the closest store location*. The goal is not to take up a bunch of your time, but see you solve a problem that looks very much like the type of work we do all the time.
-
-There are a ton of different ways to skin this cat -- be smart, be practical, thanks, and good luck!

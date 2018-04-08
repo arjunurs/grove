@@ -4,14 +4,14 @@ from googlemaps.exceptions import HTTPError, TransportError
 from os.path import dirname, abspath, join
 
 import find_store
-import settings
+from find_store import settings
 
 
 @pytest.fixture(scope="module")
 def findstore():
     fs = find_store.FindStore(settings.GOOGLE_API_KEY)
     directory = dirname(dirname(abspath(__file__)))
-    data_file = join(directory, 'src/store-locations.csv')
+    data_file = join(directory, 'src/find_store/store-locations.csv')
     fs.load_data_file(data_file)
     return fs
 
